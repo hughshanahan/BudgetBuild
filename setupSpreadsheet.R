@@ -10,26 +10,23 @@ xl_formula(c("=A1+B1","=A2+B2","=A3+B3"))
 write_xlsx(df,"test.xlsx")
 
 
-instructorInfo <- function(name,course, supportRequired=TRUE, 
+# Base function to set up information about an instructor/helper/other
+
+instructorInfo <- function(name, supportRequired=TRUE, 
                            location, nights,travel, honorarium=0){
-  list(name=name,course=course,supportRequired=supportRequired,
+  list(name=name,supportRequired=supportRequired,
             location=location,travel=travel,nights=nights,honorarium=honorarium)
 }
 
-setInstructorInfo <- function(course=""){
+# Setter function for instructorInfo
+setInstructorInfo <- function(){
   
   name <- readline("What is the name of the person?\n(If you are done just press enter)")
-  if (str_length(name)){
+  if (str_length(name) == 0){
     return -1 
   }
   else{
     location <- readline("What institution are they coming from?")
-    if ( str_length(course) == 0){
-      thisCourse <- readline("What is their role? (If they are an instructor, put down a course they teach).")
-    }
-    else{
-      thisCourse=course
-    }
     n <- readline("How many nights are they staying?")
     nights <- as.integer(n) 
     t <- readline("What is the estimate of their travel expenses?")
@@ -49,11 +46,47 @@ setInstructorInfo <- function(course=""){
     else{
       honorarium <- as.integer(honorarium)
     }
-    instructorInfo(name=name,course=thisCourse,supportRequired=supportRequired, 
+    instructorInfo(name=name,supportRequired=supportRequired, 
                    location=location, nights=nights,travel=travel, honorarium=honorarium)
   }
 }
   
+# Menu option to enter in data for instructors/helpers/etc.
+# This creates a list of lists of the form
+# Roles -> lisr(course, name1data, name2data, ...)
+setAllPeopleInfo <- function(){
+  roles <- c("Open Science", "Carpentry", "Computational Infrastructures", 
+             "Information Security", "Research Data Management",
+             "Analysis","Visualisation","Author Carpentry",
+             "Helpers","Organisers", "Photographer","Other","Finish")
+  
+  courses <- c("Open Science", "Carpentry", "Computational Infrastructures", 
+               "Information Security", "Research Data Management",
+               "Analysis","Visualisation","Author Carpentry")
+  allPeople <- list()
+  option <- 0
+  while ( option != length(roles) ){
+    option <- menu(roles, title = "Type number for a role or to finish")
+    if ( option < length(roles) ){
+      thisRole <- roles[option] 
+      nPeople <- as.integer(readline(paste("How many people are going to be in the role",
+                                           thisRole," ")))
+      print(paste("Getting information for",nPeople," individuals on",thisRole))
+      x <- list()
+      x$Course <- thisRole %in% courses
+      for ( i in c(1:nPeople) ){
+        print(paste("Enter data for individual",i,"for",thisRole))
+        thisPerson <- setInstructorInfo()
+        if ( is.integer(thisPerson)){
+          break
+        }
+        x[thisPerson$name] <- thisPerson
+      }
+      allPeople[thisRole] <- x
+    }
+  }
+  allPeople
+}
   
 
 supportInfo <- function(name,amount=0){
@@ -105,4 +138,10 @@ livingCosts <- function(room,dailyFood){
   list(room=room,dailyFood=dailyFood)
 }
 
-setLivingCosts 
+setLivingCosts <- function(){
+  room <- as.integer(readline("How much does a single room cost?"))
+  dailyFood <- as.integer(readline("What is the per diem rate?"))
+  otherCosts(room,dailyFood)
+}
+
+
