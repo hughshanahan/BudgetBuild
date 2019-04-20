@@ -7,47 +7,29 @@ xl_formula("=B2+B3")
 df <- data.frame(x=c(1,2,3),y=c(4,5,6),z=xl_formula(c("=A1+B1","=A2+B2","=A3+B3")))
 getwd()
 xl_formula(c("=A1+B1","=A2+B2","=A3+B3"))
-write_xlsx(df,"test.xlsx")
+#write_xlsx(df,"test.xlsx")
 
 
 # Base function to set up information about an instructor/helper/other
 
-instructorInfo <- function(name, supportRequired=TRUE, 
-                           location, nights,travel, honorarium=0){
-  list(name=name,supportRequired=supportRequired,
-            location=location,travel=travel,nights=nights,honorarium=honorarium)
+instructorInfo <- function(name,location, nights,travel){
+  list(name=name,location=location,travel=travel,nights=nights)
 }
 
 # Setter function for instructorInfo
 setInstructorInfo <- function(){
   
-  name <- readline("What is the name of the person?\n(If you are done just press enter)")
+  name <- readline("What is the name of the person? ")
   if (str_length(name) == 0){
     return -1 
   }
   else{
-    location <- readline("What institution are they coming from?")
-    n <- readline("How many nights are they staying?")
+    location <- readline("What institution are they coming from? ")
+    n <- readline("How many nights are they staying? ")
     nights <- as.integer(n) 
-    t <- readline("What is the estimate of their travel expenses?")
+    t <- readline("What is the estimate of their travel expenses? ")
     travel <- as.integer(t)
-    support <- readline("We assume that they will need support - if not, type N here")
-    if ( str_detect(support,"N")  ){
-      supportRequired = FALSE
-    }
-    else{
-      supportRequired = TRUE
-    }
-      
-    honorarium <- readline("If they require an honorarium put the number here.")
-    if ( str_length(honorarium) == 0  ){
-      honorarium <- 0
-    }
-    else{
-      honorarium <- as.integer(honorarium)
-    }
-    instructorInfo(name=name,supportRequired=supportRequired, 
-                   location=location, nights=nights,travel=travel, honorarium=honorarium)
+    return(instructorInfo(name=name,location=location, nights=nights,travel=travel))
   }
 }
   
@@ -71,16 +53,16 @@ setAllPeopleInfo <- function(){
       thisRole <- roles[option] 
       nPeople <- as.integer(readline(paste("How many people are going to be in the role",
                                            thisRole," ")))
-      print(paste("Getting information for",nPeople," individuals on",thisRole))
+      cat(paste("Getting information for",nPeople," individuals on",thisRole))
       x <- list()
       x$Course <- thisRole %in% courses
       for ( i in c(1:nPeople) ){
-        print(paste("Enter data for individual",i,"for",thisRole))
+        cat(paste("Enter data for individual",i,"for",thisRole))
         thisPerson <- setInstructorInfo()
         if ( is.integer(thisPerson)){
           break
         }
-        x[thisPerson$name] <- thisPerson
+        x[[length(x)+1]] <- thisPerson
       }
       allPeople[thisRole] <- x
     }
@@ -88,42 +70,46 @@ setAllPeopleInfo <- function(){
   allPeople
 }
   
-
+# Base function to create information about support from an institution
 supportInfo <- function(name,amount=0){
   list(name=name,amount=amount)
 }
 
+#setter for supportInfo
 setSupportInfo <- function(){
 
-  name <- readline("What is the name of the supportng organisation?\n(If you are done just press enter)")
+  name <- readline("What is the name of the supportng organisation? ")
   if (str_length(name) == 0){
     return -1 
   }
   else{
-    a <- readline("How much have they committed (just put in 0 if you don't know yet)")
+    a <- readline("How much have they committed (just put in 0 if you don't know yet) ")
     amount <- as.integer(a)
-    supportInfo(name,amount)
+    return(supportInfo(name,amount))
   }
 }
 
+#Base function for other Costs
 otherCosts <- function(refreshments,dinner){
   list(refreshments=refreshments,dinner=dinner)
 }
 
+# Setter for above
 setOtherCosts <- function(){
   
-  refreshments <- as.integer(readline("What is the estimated refreshments cost?"))
-  dinner <- as.integer(readline("What is the esimated costs of the school dinner?"))
-  otherCosts(refreshments,dinner)
+  refreshments <- as.integer(readline("What is the estimated refreshments cost? "))
+  dinner <- as.integer(readline("What is the esimated costs of the school dinner? "))
+  return(otherCosts(refreshments,dinner))
 
 }
 
 
-
+# Change currency (if needs be)
 currency <- function(curr="Euro"){
   paste("All costs in",curr)
 }
 
+# Setter for above
 setCurrency <- function(){
   curr <- readline("What is the currency being used in this spreadhseet?\n(If it's Euro just press enter)")
   if ( str_length(curr) == 0){
@@ -134,10 +120,12 @@ setCurrency <- function(){
   }
 }
 
+# Information on basic room and per diem costs
 livingCosts <- function(room,dailyFood){
   list(room=room,dailyFood=dailyFood)
 }
 
+# Setter for above
 setLivingCosts <- function(){
   room <- as.integer(readline("How much does a single room cost?"))
   dailyFood <- as.integer(readline("What is the per diem rate?"))
