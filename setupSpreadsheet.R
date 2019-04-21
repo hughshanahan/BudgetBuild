@@ -78,7 +78,7 @@ supportInfo <- function(name,amount=0){
 #setter for supportInfo
 setSupportInfo <- function(){
 
-  name <- readline("What is the name of the supportng organisation? ")
+  name <- readline("What is the name of the supporting organisation? \nPress enter to finish ")
   if (str_length(name) == 0){
     return -1 
   }
@@ -87,6 +87,17 @@ setSupportInfo <- function(){
     amount <- as.integer(a)
     return(supportInfo(name,amount))
   }
+}
+
+# Get all supporting organisations
+setAllSupportInfo <- function(){
+  allSupport <- list()
+  x <- setSupportInfo()
+  while( !is.integer(x) ){
+    allSupport[[length(allSupport)+1]] <- x
+    x <- setSupportInfo()
+  }
+  return(allSupport)
 }
 
 #Base function for other Costs
@@ -105,18 +116,18 @@ setOtherCosts <- function(){
 
 
 # Change currency (if needs be)
-currency <- function(curr="Euro"){
+currencyTitle <- function(curr="Euro"){
   paste("All costs in",curr)
 }
 
 # Setter for above
-setCurrency <- function(){
+setCurrencyTitle <- function(){
   curr <- readline("What is the currency being used in this spreadhseet?\n(If it's Euro just press enter)")
   if ( str_length(curr) == 0){
-    currency()
+    currencyTitle()
   }
   else{
-    currency(curr)
+    currencyTitle(curr)
   }
 }
 
@@ -130,6 +141,37 @@ setLivingCosts <- function(){
   room <- as.integer(readline("How much does a single room cost?"))
   dailyFood <- as.integer(readline("What is the per diem rate?"))
   otherCosts(room,dailyFood)
+}
+
+# Create data frame based on all of the data. 
+buildDataFrame <- function( allPeople, allSupport, currency, oCosts, lCosts){
+  peopleDF <- buildPeopleDataFrame( allPeople)
+  nRows <- computeNumRows(allPeople)
+  nCols <- computeNumCols(allSupport)
+  supportDF <- buildSupportDataFrame(allSupport,nRows) 
+  peopleSupportDF <- cbind.data.frame(peopleDF,supportDF)
+  summaryDF <- buildSummaryDF(living,other,nRows,nCols)
+
+  
+  otherPosns <- computeOtherDataPosns(nRows)
+
+  
+}
+
+# Create data frame template with people data in it. 
+# It doesn't have macro information in it
+
+buildPeopleDataFrame <- function(allPeople){
+  nRows <- computeNumRows(allPeople)
+  
+  
+}
+
+# Create data frame template with support data in it. 
+# It doesn't have macro information in it
+buildSupportDataFrame <- function(allSupport,nRows){
+  nCols <- computeNumCols(allSupport)
+  
 }
 
 
