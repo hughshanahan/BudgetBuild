@@ -90,24 +90,19 @@ supportInfo <- function(name,amount=0){
 #setter for supportInfo
 setSupportInfo <- function(){
 
-  name <- readline("What is the name of the supporting organisation? \nPress enter to finish ")
-  if (str_length(name) == 0){
-    return -1 
-  }
-  else{
-    a <- readline("How much have they committed (just put in 0 if you don't know yet) ")
-    amount <- as.integer(a)
-    return(supportInfo(name,amount))
-  }
+  name <- readline("What is the name of the supporting organisation? ")
+  a <- readline("How much have they committed (just put in 0 if you don't know yet) ")
+  amount <- as.integer(a)
+  return(supportInfo(name,amount))
 }
 
 # Get all supporting organisations
 setAllSupportInfo <- function(){
   allSupport <- list()
-  x <- setSupportInfo()
-  while( !is.integer(x) ){
-    allSupport[[length(allSupport)+1]] <- x
+  n <- as.integer(readline("How many organisations are contributing? "))
+  for ( i in c(1:n)){
     x <- setSupportInfo()
+    allSupport[[length(allSupport)+1]] <- x
   }
   return(allSupport)
 }
@@ -157,7 +152,7 @@ setLivingCosts <- function(){
 
 # Create data frame based on all of the data. 
 buildDataFrame <- function( allPeople, allSupport, currency, oCosts, lCosts){
-  peopleDF <- buildPeopleDataFrame( allPeople)
+  peopleDF <- buildPeopleDataFrame( allPeople, currency)
   nRows <- computeNumRows(allPeople)
   nCols <- computeNumCols(allSupport)
   supportDF <- buildSupportDataFrame(allSupport,nRows) 
@@ -193,6 +188,8 @@ buildPeopleDataFrame <- function(allPeople,currency){
   orderedRoles <- c(courses,nonCourses)
   thisRow <- 1
   
+  templateDF[thisRow,1] <- "Funding committed"
+  thisRow <- increment(thisRow) 
   for ( role in names(orderedRoles) ){
     templateDF[thisRow,1] <- role
     for ( personName in setdiff(names(allPeople[[role]]),"Course")){
@@ -201,27 +198,71 @@ buildPeopleDataFrame <- function(allPeople,currency){
       templateDF[thisRow,3] <- x$location
       templateDF[thisRow,5] <- x$nights
       templateDF[thisRow,6] <- x$travel
-      thisRow <- thisRow + 1
+      thisRow <- increment(thisRow)
     }
-    thisRow <- thisRow + 1
+    thisRow <- increment(thisRow)
   }
   return(templateDF)
   
+}
+
+increment <- function(n){
+  return(n+1)
 }
 
 # Create data frame template with support data in it. 
 # It doesn't have macro information in it
 buildSupportDataFrame <- function(allSupport,nRows){
   nCols <- computeNumCols(allSupport)
+  supportDF <- data.frame(matrix(NA, nrow=nRows, ncol=nCols))
+  for ( i in c(1:nRows)){
+    for ( j in c(1:nCols)){
+      supportDF[i,j] <- ""
+    }
+  }
+  colnames(supportDF) <- sapply(allSupport,function(a){a$name})
+  supportDF[1,] <- sapply(allSupport,function(a){a$amount})
   
+  return(supportDF)
 }
 
 # Compute total number of rows required for all the people data
 # Each role gets a row for each person plus an additional space for readability
 computeNumRows <- function(allPeople){
-  nRoles <- length(allPeople)
+  nRoles <- length(allPeople) + 1
+# + 1 to allow for row for committed funds
   nRows <- nRoles + sum(sapply(allPeople,function(a){length(a) - 1}))
   return(nRows)
 }
 
+# Return number of columns for support
+computeNumCols <- function(allSupport){
+  return(length(allSupport))
+}
+
+
+# This creates a data frame with all the summary data at the bottom of the spreadsheet
+# living is a list with the information about per diems etc.
+# other has dinner etc expenses
+# nRows is the total number of rows in the total data frame (people+support) so far
+# nCols is the _total_ number of columsn in the total data frame (people+support) so far
+
+buildSummaryDF <- function(living,other,nRows,nCols,allSupportInfo){
+  summaryDF <- data.frame(matrix(NA,nrow=13,ncol=nCols)) 
+  for ( i in dim(summaryDF)[1]){
+    for ( j in dim(summaryDF)[2]){
+      summaryDF[i,j] <- ""
+    }
+  }
+  if (nCols > length(LETTERS)){
+    stop("Code cannot deal with columns that are of the form AA etc. talk to Hugh about this!")
+  }
+  nCP <- nCols - computeNumCols(allSupportInfo)
+  
+  summaryDF[2,1] <- "Sub totals"
+  summaryDF[5,1] <- "Other expenses"
+  summaryDF[5,2] <- "Refreshments"
+  summaryDF[6,2] <- "Dinner"
+
+}
 
