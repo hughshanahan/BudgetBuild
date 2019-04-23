@@ -3,12 +3,16 @@ library("writexl")
 library("stringr")
 
 
-xl_formula("=B2+B3")
-df <- data.frame(x=c(1,2,3),y=c(4,5,6),z=xl_formula(c("=A1+B1","=A2+B2","=A3+B3")))
-getwd()
-xl_formula(c("=A1+B1","=A2+B2","=A3+B3"))
-#write_xlsx(df,"test.xlsx")
+#xl_formula("=B2+B3")
+#df <- data.frame(x=c("x+1", 1,2,3),y=c("y+1",4,5,6),z=c("z+1","","",""))
 
+#df[,3]    <- xl_formula(c("=A1+B1","=A2+B2","=A3+B3","=A4+B4")
+
+
+#df[1,3] <- "z+1"
+#xl_formula(c("=A1+B1","=A2+B2","=A3+B3"))
+#write_xlsx(df,col_names=FALSE, "test.xlsx")
+#names(df)
 
 # Base function to set up information about an instructor/helper/other
 
@@ -62,14 +66,22 @@ setAllPeopleInfo <- function(){
         if ( is.integer(thisPerson)){
           break
         }
-        x[[length(x)+1]] <- thisPerson
+        x <- addAndNameToList(x,thisPerson,thisPerson$name)
       }
-      allPeople[thisRole] <- x
+      allPeople <- addAndNameToList(allPeople,x,thisRole)
+
     }
   }
-  allPeople
+  return(allPeople)
 }
   
+# Short function to add an element to a list and give it a name
+addAndNameToList <- function(myList,newElement,newName){
+  myList[[length(myList) + 1]] <- newElement
+  names(myList)[length(myList)] <- newName
+  return(myList)
+}
+
 # Base function to create information about support from an institution
 supportInfo <- function(name,amount=0){
   list(name=name,amount=amount)
@@ -159,11 +171,41 @@ buildDataFrame <- function( allPeople, allSupport, currency, oCosts, lCosts){
 # Create data frame template with people data in it. 
 # It doesn't have macro information in it
 
-buildPeopleDataFrame <- function(allPeople){
+buildPeopleDataFrame <- function(allPeople,currency){
   nRows <- computeNumRows(allPeople)
+  emptyStrings <- rep("",nRows)
+# Nine colums of data  
+  templateDF <- data.frame(V1=emptyStrings,V2=emptyStrings,
+                           V3=emptyStrings,V4=emptyStrings,
+                           V5=emptyStrings,V6=emptyStrings,
+                           V7=emptyStrings,V8=emptyStrings,
+                           V9=emptyStrings,stringsAsFactors = FALSE)
+  colnames(templateDF) <- c(currency, "Instructors", "Location", "Support required",
+                            "Nights staying","Travel","Food","Accomodation","Honorarium")
   
-    
+# Find all the course-related roles
+  roles <- sapply(allPeople,function(r){
+    return(r$Course)
+  })
   
+  courses <- which(roles)
+  nonCourses <- which(!roles)
+  orderedRoles <- c(courses,nonCourses)
+  thisRow <- 1
+  
+  for ( role in names(orderedRoles) ){
+    templateDF[thisRow,1] <- role
+    for ( personName in setdiff(names(allPeople[[role]]),"Course")){
+      x <- allPeople[[role]][[personName]]
+      templateDF[thisRow,2] <- personName
+      templateDF[thisRow,3] <- x$location
+      templateDF[thisRow,5] <- x$nights
+      templateDF[thisRow,6] <- x$travel
+      thisRow <- thisRow + 1
+    }
+    thisRow <- thisRow + 1
+  }
+  return(templateDF)
   
 }
 
@@ -178,10 +220,8 @@ buildSupportDataFrame <- function(allSupport,nRows){
 # Each role gets a row for each person plus an additional space for readability
 computeNumRows <- function(allPeople){
   nRoles <- length(allPeople)
-  nRows <- nRoles
-  sum(sapply(allPeople,function(a){length(a) - 1}))
-  
-  
+  nRows <- nRoles + sum(sapply(allPeople,function(a){length(a) - 1}))
+  return(nRows)
 }
 
 
