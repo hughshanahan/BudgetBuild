@@ -157,11 +157,32 @@ buildDataFrame <- function( allPeople, allSupport, currency, oCosts, lCosts){
   nCols <- computeNumCols(allSupport)
   supportDF <- buildSupportDataFrame(allSupport,nRows) 
   peopleSupportDF <- cbind.data.frame(peopleDF,supportDF)
-  psDF <- addExcelMacros(peopleSupportDF,nRows,nCols)
-  summaryDF <- buildSummaryDF(living,other,nRows,nCols)
+  psDF <- addExcelMacros(peopleSupportDF,nRows)
+  summaryDF <- buildSummaryDF(lCosts,oCosts,nRows,nCols)
   colnames(summaryDF) <- colnames(peopleSupportDF)
   finalDF <- rbind(peopleSupportDF,summaryDF)
   return(finalDF)
+}
+
+# Add columns of people+support DF relevant macros (total food, accomodation)
+addExcelMacros <- function(psDF,nRows){
+  roomData <- nRows + 12
+  foodData <- nRows + 13
+  blanks <- rep("=",nRows)
+  
+  foodCol <- blanks
+  accomodationCol <- blanks
+  for ( i in 1:nRows){
+    if (str_length(psDF[i,2]) > 0 ){
+      foodCol[i] <- multiplyCells(LETTERS[2],foodData,LETTERS[5],i)
+      accomodationCol[i] <- multiplyCells(LETTERS[2],roomData,LETTERS[5],i)
+    }
+  }
+
+  psDF[,7] <- xl_formula(foodCol)
+  psDF[,8] <- xl_formula(accomodationCol)
+  
+  return(psDF)
 }
 
 # Create data frame template with people data in it. 
@@ -326,4 +347,9 @@ createHorizontalRange <- function(lowLetter,highLetter,column){
 # Sum along row range
 sumHorizontalRange <- function(lowLetter,highLetter,column){
   paste("=sum(",createHorizontalRange(lowLetter,highLetter,column),")")
+}
+
+# Return formula to compute product of two cells
+multiplyCells <- function(letter1,column1,letter2,column2){
+  paste("=",letter1,column1,"*",letter2,column2,sep="")
 }
