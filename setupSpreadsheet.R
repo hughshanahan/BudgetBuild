@@ -151,11 +151,9 @@ buildDataFrame <- function( allPeople, allSupport, currency, oCosts, lCosts){
   supportDF <- buildSupportDataFrame(allSupport,nRows) 
   peopleSupportDF <- cbind.data.frame(peopleDF,supportDF)
   summaryDF <- buildSummaryDF(living,other,nRows,nCols)
-
-  
-  otherPosns <- computeOtherDataPosns(nRows)
-
-  
+  templateDF <- rbind(peopleSupportDF,summaryDF)
+  finalDF <- addExcelMacros(templateDF,nRows,nCols)
+  return(finalDF)
 }
 
 # Create data frame template with people data in it. 
@@ -164,6 +162,8 @@ buildDataFrame <- function( allPeople, allSupport, currency, oCosts, lCosts){
 buildPeopleDataFrame <- function(allPeople){
   nRows <- computeNumRows(allPeople)
   
+    
+  
   
 }
 
@@ -171,6 +171,16 @@ buildPeopleDataFrame <- function(allPeople){
 # It doesn't have macro information in it
 buildSupportDataFrame <- function(allSupport,nRows){
   nCols <- computeNumCols(allSupport)
+  
+}
+
+# Compute total number of rows required for all the people data
+# Each role gets a row for each person plus an additional space for readability
+computeNumRows <- function(allPeople){
+  nRoles <- length(allPeople)
+  nRows <- nRoles
+  sum(sapply(allPeople,function(a){length(a) - 1}))
+  
   
 }
 
