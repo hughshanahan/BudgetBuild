@@ -147,7 +147,7 @@ livingCosts <- function(room,dailyFood){
 setLivingCosts <- function(){
   room <- as.integer(readline("How much does a single room cost?"))
   dailyFood <- as.integer(readline("What is the per diem rate?"))
-  otherCosts(room,dailyFood)
+  livingCosts(room,dailyFood)
 }
 
 # Create data frame based on all of the data. 
@@ -157,9 +157,10 @@ buildDataFrame <- function( allPeople, allSupport, currency, oCosts, lCosts){
   nCols <- computeNumCols(allSupport)
   supportDF <- buildSupportDataFrame(allSupport,nRows) 
   peopleSupportDF <- cbind.data.frame(peopleDF,supportDF)
+  psDF <- addExcelMacros(peopleSupportDF,nRows,nCols)
   summaryDF <- buildSummaryDF(living,other,nRows,nCols)
-  templateDF <- rbind(peopleSupportDF,summaryDF)
-  finalDF <- addExcelMacros(templateDF,nRows,nCols)
+  colnames(summaryDF) <- colnames(peopleSupportDF)
+  finalDF <- rbind(peopleSupportDF,summaryDF)
   return(finalDF)
 }
 
@@ -248,10 +249,11 @@ computeNumCols <- function(allSupport){
 # nCols is the _total_ number of columsn in the total data frame (people+support) so far
 
 buildSummaryDF <- function(living,other,nRows,nCols,allSupportInfo){
-  summaryDF <- data.frame(matrix(NA,nrow=13,ncol=nCols)) 
-  for ( i in dim(summaryDF)[1]){
-    for ( j in dim(summaryDF)[2]){
-      summaryDF[i,j] <- ""
+  nR <- 13
+  summaryDF <- data.frame(matrix(NA,nrow=nR,ncol=nCols)) 
+  for ( i in 1:dim(summaryDF)[1]){
+    for ( j in 1:dim(summaryDF)[2]){
+      summaryDF[i,j] <- " "
     }
   }
   if (nCols > length(LETTERS)){
@@ -259,10 +261,69 @@ buildSummaryDF <- function(living,other,nRows,nCols,allSupportInfo){
   }
   nCP <- nCols - computeNumCols(allSupportInfo)
   
+  # Fixed items
   summaryDF[2,1] <- "Sub totals"
   summaryDF[5,1] <- "Other expenses"
   summaryDF[5,2] <- "Refreshments"
   summaryDF[6,2] <- "Dinner"
-
+  summaryDF[12,1] <- "Single Room Accomodation"
+  summaryDF[13,1] <- "Per Diem"
+  summaryDF[12,2] <- living$room
+  summaryDF[13,2] <- living$dailyFood
+  summaryDF[8,5] <- "Sub-totals = "
+  
+  # formulae (even when they aren't)
+  blanks <- rep("=",nR)
+  travelCol <- blanks
+  travelCol[8] <- sumVerticalRange(LETTERS[6],2,nRows)
+  summaryDF[,6] <- xl_formula(travelCol)
+  
+  foodCol <- blanks
+  foodCol[8] <- sumVerticalRange(LETTERS[7],2,nRows+6)
+  foodCol[5] <- paste("=",other$refreshments)
+  foodCol[6] <- paste("=",other$dinner)
+  summaryDF[,7] <- xl_formula(foodCol)
+  
+  accomodationCol <- blanks
+  accomodationCol[8] <- sumVerticalRange(LETTERS[8],2,nRows)
+  accomodationCol[9] <- '="Total Expense"'
+  accomodationCol[10] <- '="Total Budget"'
+  accomodationCol[11] <- '="Budget Result"'
+  summaryDF[,8] <- xl_formula(accomodationCol)
+  
+  totalsCol <- blanks
+  totalsCol[8] <- sumVerticalRange(LETTERS[9],2,nRows)
+  totalsCol[9] <- sumHorizontalRange(LETTERS[6],LETTERS[9],nRows+8)
+  totalsCol[10] <- sumHorizontalRange(LETTERS[nCP+1],LETTERS[nCols],2)
+  totalsCol[11] <- sumVerticalRange(LETTERS[10],nRows+9,nRows+10)
+  summaryDF[,9] <- xl_formula(totalsCol)
+  
+  for ( i in (nCP+1):nCols ) {
+    x <- blanks
+    x[2] <- sumVerticalRange(LETTERS[i],2,nRows)
+    summaryDF[,i] <- xl_formula(x)
+  }
+  
+  return(summaryDF)
+  
 }
 
+# This creates a string for an excel range along column
+createVerticalRange <- function(letter,low,high){
+  paste(letter,low,":",letter,high,sep="")
+}
+
+# Sum along column range
+sumVerticalRange <- function(letter,low,high){
+  paste("=sum(",createVerticalRange(letter,low,high),")")
+}
+
+# This creates a string for an excel range along column
+createHorizontalRange <- function(lowLetter,highLetter,column){
+  paste(lowLetter,column,":",highLetter,column,sep="")
+}
+
+# Sum along row range
+sumHorizontalRange <- function(lowLetter,highLetter,column){
+  paste("=sum(",createHorizontalRange(lowLetter,highLetter,column),")")
+}
