@@ -2,6 +2,27 @@ library("readxl")
 library("writexl")
 library("stringr")
 
+# Call this function just to run everything
+
+runThis <- function(){
+# First get people data
+  allPeople <- setAllPeopleInfo()
+# Now organisational support
+  allOrgs <- setAllSupportInfo()
+# Get currency
+  currency <- setCurrencyTitle()
+# Get room and per diems
+  livingCosts <- setLivingCosts()
+# Get other costs
+  otherFoodCosts <- setOtherCosts()
+  
+  fullDF <- buildDataFrame( allPeople, allOrgs, currency, otherFoodCosts, livingCosts)  
+  fileName <- readline("Enter the name of the spreadsheet")
+   
+  write_xlsx(fullDF, fileName)
+  
+}
+
 
 #xl_formula("=B2+B3")
 #df <- data.frame(x=c("x+1", 1,2,3),y=c("y+1",4,5,6),z=c("z+1","","",""))
