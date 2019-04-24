@@ -20,19 +20,26 @@ runThis <- function(){
   fileName <- readline("Enter the name of the spreadsheet")
    
   write_xlsx(fullDF, fileName)
+  return(fullDF)
   
 }
 
 
 #xl_formula("=B2+B3")
-#df <- data.frame(x=c("x+1", 1,2,3),y=c("y+1",4,5,6),z=c("z+1","","",""))
-
-#df[,3]    <- xl_formula(c("=A1+B1","=A2+B2","=A3+B3","=A4+B4")
 
 
+#df <- data.frame(x=c("x+1"),y=c("y+1"),z=c("z+1"))
+#write_xlsx(df, "test.xlsx")
+#df <- data.frame(x=c(1,2,3),y=c(4,5,6),z=c("","",""))
+
+#df[2:4,3] <- xl_formula(c("=A2+B2","=A3+B3","=A4+B4"))
+#df[,3]    <- xl_formula(c("=A2+B2","=A3+B3","=A4+B4"))
+#df
+#write_xlsx(df, "test.xlsx",append=TRUE)
 #df[1,3] <- "z+1"
 #xl_formula(c("=A1+B1","=A2+B2","=A3+B3"))
-#write_xlsx(df,col_names=FALSE, "test.xlsx")
+#df
+
 #names(df)
 
 # Base function to set up information about an instructor/helper/other
@@ -76,8 +83,12 @@ setAllPeopleInfo <- function(){
     option <- menu(roles, title = "Type number for a role or to finish")
     if ( option < length(roles) ){
       thisRole <- roles[option] 
-      nPeople <- as.integer(readline(paste("How many people are going to be in the role",
-                                           thisRole," ")))
+      reply <- readline(paste("How many people are going to be in the role",
+                              thisRole," "))
+      while(is.na(as.integer(reply))){
+        reply <- readline("Please enter the _number of people_ who are going to be in this role.")
+      }
+      nPeople <- as.integer(reply)
       cat(paste("Getting information for",nPeople," individuals on",thisRole))
       x <- list()
       x$Course <- thisRole %in% courses
@@ -112,6 +123,7 @@ supportInfo <- function(name,amount=0){
 setSupportInfo <- function(){
 
   name <- readline("What is the name of the supporting organisation? ")
+  
   a <- readline("How much have they committed (just put in 0 if you don't know yet) ")
   amount <- as.integer(a)
   return(supportInfo(name,amount))
@@ -120,7 +132,11 @@ setSupportInfo <- function(){
 # Get all supporting organisations
 setAllSupportInfo <- function(){
   allSupport <- list()
-  n <- as.integer(readline("How many organisations are contributing? "))
+  reply <- readline("How many organisations are contributing? ")
+  while(is.na(as.integer(reply))){
+    reply <- readline("Please enter the _number of organisations_ that are going to be contributing.")
+  }
+  n <- as.integer(reply)
   for ( i in c(1:n)){
     x <- setSupportInfo()
     allSupport[[length(allSupport)+1]] <- x
@@ -179,9 +195,9 @@ buildDataFrame <- function( allPeople, allSupport, currency, oCosts, lCosts){
   supportDF <- buildSupportDataFrame(allSupport,nRows) 
   peopleSupportDF <- cbind.data.frame(peopleDF,supportDF)
   psDF <- addExcelMacros(peopleSupportDF,nRows)
-  summaryDF <- buildSummaryDF(lCosts,oCosts,nRows,nCols)
+  summaryDF <- buildSummaryDF(lCosts,oCosts,nRows,dim(psDF)[2],allSupport)
   colnames(summaryDF) <- colnames(peopleSupportDF)
-  finalDF <- rbind(peopleSupportDF,summaryDF)
+  finalDF <- rbind(psDF,summaryDF)
   return(finalDF)
 }
 
@@ -194,7 +210,7 @@ addExcelMacros <- function(psDF,nRows){
   foodCol <- blanks
   accomodationCol <- blanks
   for ( i in 1:nRows){
-    if (str_length(psDF[i,2]) > 0 ){
+    if (!is.na(psDF[i,2]) > 0 ){
       foodCol[i] <- multiplyCells(LETTERS[2],foodData,LETTERS[5],i)
       accomodationCol[i] <- multiplyCells(LETTERS[2],roomData,LETTERS[5],i)
     }
@@ -213,11 +229,12 @@ buildPeopleDataFrame <- function(allPeople,currency){
   nRows <- computeNumRows(allPeople)
   emptyStrings <- rep("",nRows)
 # Nine colums of data  
-  templateDF <- data.frame(V1=emptyStrings,V2=emptyStrings,
-                           V3=emptyStrings,V4=emptyStrings,
-                           V5=emptyStrings,V6=emptyStrings,
-                           V7=emptyStrings,V8=emptyStrings,
-                           V9=emptyStrings,stringsAsFactors = FALSE)
+#  templateDF <- data.frame(V1=emptyStrings,V2=emptyStrings,
+#                           V3=emptyStrings,V4=emptyStrings,
+#                           V5=emptyStrings,V6=emptyStrings,
+#                           V7=emptyStrings,V8=emptyStrings,
+#                           V9=emptyStrings,stringsAsFactors = FALSE)
+  templateDF <- data.frame(matrix(NA,nrow=nRows,ncol=9))
   colnames(templateDF) <- c(currency, "Instructors", "Location", "Support required",
                             "Nights staying","Travel","Food","Accomodation","Honorarium")
   
@@ -239,8 +256,8 @@ buildPeopleDataFrame <- function(allPeople,currency){
       x <- allPeople[[role]][[personName]]
       templateDF[thisRow,2] <- personName
       templateDF[thisRow,3] <- x$location
-      templateDF[thisRow,5] <- x$nights
-      templateDF[thisRow,6] <- x$travel
+      templateDF[thisRow,5] <- as.integer(x$nights)
+      templateDF[thisRow,6] <- as.integer(x$travel)
       thisRow <- increment(thisRow)
     }
     thisRow <- increment(thisRow)
@@ -258,11 +275,11 @@ increment <- function(n){
 buildSupportDataFrame <- function(allSupport,nRows){
   nCols <- computeNumCols(allSupport)
   supportDF <- data.frame(matrix(NA, nrow=nRows, ncol=nCols))
-  for ( i in c(1:nRows)){
-    for ( j in c(1:nCols)){
-      supportDF[i,j] <- ""
-    }
-  }
+#  for ( i in c(1:nRows)){
+#    for ( j in c(1:nCols)){
+#      supportDF[i,j] <- ""
+#    }
+#  }
   colnames(supportDF) <- sapply(allSupport,function(a){a$name})
   supportDF[1,] <- sapply(allSupport,function(a){a$amount})
   
@@ -293,11 +310,11 @@ computeNumCols <- function(allSupport){
 buildSummaryDF <- function(living,other,nRows,nCols,allSupportInfo){
   nR <- 13
   summaryDF <- data.frame(matrix(NA,nrow=nR,ncol=nCols)) 
-  for ( i in 1:dim(summaryDF)[1]){
-    for ( j in 1:dim(summaryDF)[2]){
-      summaryDF[i,j] <- " "
-    }
-  }
+#  for ( i in 1:dim(summaryDF)[1]){
+#    for ( j in 1:dim(summaryDF)[2]){
+#      summaryDF[i,j] <- " "
+#    }
+#  }
   if (nCols > length(LETTERS)){
     stop("Code cannot deal with columns that are of the form AA etc. talk to Hugh about this!")
   }
@@ -310,8 +327,8 @@ buildSummaryDF <- function(living,other,nRows,nCols,allSupportInfo){
   summaryDF[6,2] <- "Dinner"
   summaryDF[12,1] <- "Single Room Accomodation"
   summaryDF[13,1] <- "Per Diem"
-  summaryDF[12,2] <- living$room
-  summaryDF[13,2] <- living$dailyFood
+  summaryDF[12,2] <- as.integer(living$room)
+  summaryDF[13,2] <- as.integer(living$dailyFood)
   summaryDF[8,5] <- "Sub-totals = "
   
   # formulae (even when they aren't)
@@ -322,8 +339,8 @@ buildSummaryDF <- function(living,other,nRows,nCols,allSupportInfo){
   
   foodCol <- blanks
   foodCol[8] <- sumVerticalRange(LETTERS[7],2,nRows+6)
-  foodCol[5] <- paste("=",other$refreshments)
-  foodCol[6] <- paste("=",other$dinner)
+  foodCol[5] <- paste("=",other$refreshments,sep="")
+  foodCol[6] <- paste("=",other$dinner,sep="")
   summaryDF[,7] <- xl_formula(foodCol)
   
   accomodationCol <- blanks
@@ -367,7 +384,7 @@ createHorizontalRange <- function(lowLetter,highLetter,column){
 
 # Sum along row range
 sumHorizontalRange <- function(lowLetter,highLetter,column){
-  paste("=sum(",createHorizontalRange(lowLetter,highLetter,column),")")
+  paste("=sum(",createHorizontalRange(lowLetter,highLetter,column),")",sep="")
 }
 
 # Return formula to compute product of two cells
