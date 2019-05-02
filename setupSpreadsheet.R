@@ -24,6 +24,14 @@ runThis <- function(){
   
 }
 
+#Function just to declare all variables
+setUp <- function(){
+  assign("allPeople", list(), envir = .GlobalEnv)
+  assign("allOrgs", list(), envir = .GlobalEnv)
+  assign("currency", list(), envir = .GlobalEnv)
+  assign("livingCosts", list(), envir = .GlobalEnv)
+  assign("otherFoodCosts", list(), envir = .GlobalEnv)
+}
 
 #xl_formula("=B2+B3")
 
