@@ -8,41 +8,51 @@
 #
 
 library(shiny)
+myDir <- getwd()
+source(paste(myDir,"setupSpreadsheet.R",sep="/"))
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
-   
-   # Application title
-   titlePanel("Budget builder"),
-   
-   # Sidebar with a slider input for number of bins 
-   sidebarLayout(
-      sidebarPanel(
-         sliderInput("bins",
-                     "Number of bins:",
-                     min = 1,
-                     max = 50,
-                     value = 30)
-      ),
+  titlePanel("budgetBuild"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      helpText("Enter role details."),
       
-      # Show a plot of the generated distribution
-      mainPanel(
-         plotOutput("distPlot")
-      )
-   )
+      selectInput("role", 
+                  label = "Choose a course/role",
+                  choices = c("Open Science", "Carpentry", "Computational Infrastructures", 
+                              "Information Security", "Research Data Management",
+                              "Analysis","Visualisation","Author Carpentry",
+                              "Helpers","Organisers", "Photographer","Other"),
+                  selected = "Other"),
+      
+      textInput("name", "Name of person", 
+                value = ""),
+      
+      sliderInput("range", 
+                  label = "Range of interest:",
+                  min = 0, max = 100, value = c(0, 100))
+      ),
+    
+    mainPanel(
+      textOutput("selected_role")
+    )
+  )  
 )
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-   
-   output$distPlot <- renderPlot({
-      # generate bins based on input$bins from ui.R
-      x    <- faithful[, 2] 
-      bins <- seq(min(x), max(x), length.out = input$bins + 1)
-      
-      # draw the histogram with the specified number of bins
-      hist(x, breaks = bins, col = 'darkgray', border = 'white')
-   })
+
+  
+  # if ( !exists(allPeople) ){
+  #   allPeople <- list()
+  # }
+  
+  output$selected_role <- renderText({ 
+    paste("You have selected", getwd())
+          #input$role)
+  }) 
 }
 
 # Run the application 
