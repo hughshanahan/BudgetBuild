@@ -24,8 +24,8 @@ runThis <- function(){
   
 }
 
-#Function just to declare all variables
-setUp <- function(){
+#Function just to declare a set of global variables
+setUpBudgetBuild <- function(){
   assign("allPeople", list(), envir = .GlobalEnv)
   assign("allOrgs", list(), envir = .GlobalEnv)
   assign("currency", list(), envir = .GlobalEnv)
