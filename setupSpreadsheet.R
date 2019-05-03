@@ -114,7 +114,23 @@ setAllPeopleInfo <- function(){
   }
   return(allPeople)
 }
+
+# Short function to determine if one of the roles is a course.
+
+isThisACourse <- function(thisRole){
+  courses <- c("Open Science", "Carpentry", "Computational Infrastructures", 
+               "Information Security", "Research Data Management",
+               "Analysis","Visualisation","Author Carpentry")
+  answer <- thisRole %in% courses
+  if ( length(answer) > 1 ){
+    warning("isThisACourse expects one string as input returning vector",
+            call. = TRUE)
+  }
   
+  return(answer)
+
+}  
+
 # Short function to add an element to a list and give it a name
 addAndNameToList <- function(myList,newElement,newName){
   myList[[length(myList) + 1]] <- newElement
